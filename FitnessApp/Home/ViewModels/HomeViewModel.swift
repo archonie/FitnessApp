@@ -8,9 +8,12 @@
 import SwiftUI
 
 class HomeViewModel: ObservableObject {
-    @State var calories: Int = 123
-    @State var active: Int = 52
-    @State var stand: Int = 8
+    
+    let healthManager = HealthManager.shared
+    
+    @Published var calories: Int = 123
+    @Published var active: Int = 52
+    @Published var stand: Int = 8
     
     @Published var mockActivities: [Activity] = [
         Activity(id: 0, title: "Today Steps", subtitle: "Goal 10,000", image: "figure.walk", tintColor: .green, amount: "6121"),
@@ -25,4 +28,57 @@ class HomeViewModel: ObservableObject {
         Workout(id: 2, title: "Running", image: "figure.run", duration: "23 mins", calories: "341 kcal", date: "Aug 3", tintColor: .blue),
         Workout(id: 3, title: "Running", image: "figure.run", duration: "23 mins", calories: "341 kcal", date: "Aug 3", tintColor: .cyan)
     ]
+    
+    init() {
+        Task {
+            do {
+                try await healthManager.requestHealthKitAccess()
+                fetchTodayCalories()
+                fetchTodayExerciseTime()
+                fetchTodayStandHours()
+            } catch {
+                print(error.localizedDescription)
+            }
+        }
+        
+    }
+    
+    func fetchTodayCalories() {
+        healthManager.fetchTodayCaloriesBurned { result in
+            switch result {
+            case .success(let caloriesBurned):
+                DispatchQueue.main.async {
+                    self.calories = Int(caloriesBurned)
+                }
+            case .failure(let error):
+                print(error.localizedDescription)
+            }
+        }
+    }
+    
+    func fetchTodayExerciseTime() {
+        healthManager.fetchTodayExerciseTime { result in
+            switch result {
+            case .success(let exerciseTime):
+                DispatchQueue.main.async {
+                    self.active = Int(exerciseTime)
+                }
+            case .failure(let error):
+                print(error.localizedDescription)
+            }
+        }
+    }
+    
+    func fetchTodayStandHours() {
+        healthManager.fetchTodayStandHours { result in
+            switch result {
+            case .success(let standHours):
+                DispatchQueue.main.async {
+                    self.stand = standHours
+                }
+            case .failure(let error):
+                print(error.localizedDescription)
+            }
+        }
+    }
 }
