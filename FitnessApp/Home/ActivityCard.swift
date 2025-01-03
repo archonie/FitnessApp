@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct Activity: Identifiable {
+struct Activity {
     let id: Int
     let title: String
     let subtitle: String
