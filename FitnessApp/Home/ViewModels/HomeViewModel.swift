@@ -14,6 +14,7 @@ class HomeViewModel: ObservableObject {
     @Published var calories: Int = 123
     @Published var active: Int = 52
     @Published var stand: Int = 8
+    @Published var activities: [Activity] = []
     
     @Published var mockActivities: [Activity] = [
         Activity(id: 0, title: "Today Steps", subtitle: "Goal 10,000", image: "figure.walk", tintColor: .green, amount: "6121"),
@@ -36,6 +37,8 @@ class HomeViewModel: ObservableObject {
                 fetchTodayCalories()
                 fetchTodayExerciseTime()
                 fetchTodayStandHours()
+                fetchTodaySteps()
+                fetchCurrentWeekActivities()
             } catch {
                 print(error.localizedDescription)
             }
@@ -49,6 +52,8 @@ class HomeViewModel: ObservableObject {
             case .success(let caloriesBurned):
                 DispatchQueue.main.async {
                     self.calories = Int(caloriesBurned)
+                    let activity = Activity(id: 1, title: "Calories Burned", subtitle: "Today", image: "flame", tintColor: .red, amount: caloriesBurned.formattedNumberString())
+                    self.activities.append(activity)
                 }
             case .failure(let error):
                 print(error.localizedDescription)
@@ -81,4 +86,32 @@ class HomeViewModel: ObservableObject {
             }
         }
     }
+    
+    //MARK: Fitness Activity
+    func fetchTodaySteps() {
+        healthManager.fetchTodaySteps { result in
+            switch result {
+            case .success(let steps):
+                DispatchQueue.main.async {
+                    self.activities.append(steps)
+                }
+            case .failure(let failure):
+                print(failure.localizedDescription)
+            }
+        }
+    }
+    
+    func fetchCurrentWeekActivities() {
+        healthManager.fetchCurrentWeekWorkoutStats { results in
+            switch results {
+            case .success(let activities):
+                DispatchQueue.main.async {
+                    self.activities.append(contentsOf: activities)
+                }
+            case .failure(let failure):
+                print(failure.localizedDescription)
+            }
+        }
+    }
+    
 }
