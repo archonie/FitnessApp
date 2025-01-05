@@ -20,6 +20,21 @@ extension Date {
         components.weekday = 2
         return calendar.date(from: components) ?? Date()
     }
+    
+    func fetchMonthStartAndEndDate()-> (Date, Date){
+        let calendar = Calendar.current
+        let startDateComponent = calendar.dateComponents([.year, .month], from: calendar.startOfDay(for: self))
+        let startDate = calendar.date(from: startDateComponent) ?? self
+        let endDate = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: startDate) ?? self
+        return (startDate, endDate)
+    }
+    
+    func formatWorkoutDate() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        return formatter.string(from: self)
+    }
+    
 }
 
 extension Double {
@@ -119,7 +134,7 @@ class HealthManager {
             }
             let steps = quantity.doubleValue(for: .count())
             print(steps)
-            let activity = Activity(id: 0, title: "Today Steps", subtitle: "Goal 10,000", image: "figure.walk", tintColor: .green, amount: steps.formattedNumberString())
+            let activity = Activity(title: "Today Steps", subtitle: "Goal 10,000", image: "figure.walk", tintColor: .green, amount: steps.formattedNumberString())
             completion(.success(activity))
             
         }
@@ -167,12 +182,32 @@ class HealthManager {
     
     func generateActivitiesFromDurations(running: Int, strength: Int, soccer: Int, basketball: Int, stairs: Int, kickboxing: Int) -> [Activity] {
         return [
-            Activity(id: 0, title: "Running", subtitle: "This Week", image: "figure.run", tintColor: .green, amount: "\(running) mins"),
-            Activity(id: 1, title: "Strength Training", subtitle: "This Week", image: "dumbbell", tintColor: .blue, amount: "\(strength) mins"),
-            Activity(id: 2, title: "Soccer", subtitle: "This Week", image: "figure.soccer", tintColor: .indigo, amount: "\(soccer) mins"),
-            Activity(id: 3, title: "Basketball", subtitle: "This Week", image: "figure.basketball", tintColor: .purple, amount: "\(basketball) mins"),
-            Activity(id: 4, title: "Stairs", subtitle: "This Week", image: "figure.stairs", tintColor: .pink, amount: "\(stairs) mins"),
-            Activity(id: 5, title: "Kickboxing", subtitle: "This Week", image: "figure.kickboxing", tintColor: .red, amount: "\(kickboxing) mins"),
+            Activity(title: "Running", subtitle: "This Week", image: "figure.run", tintColor: .green, amount: "\(running) mins"),
+            Activity(title: "Strength Training", subtitle: "This Week", image: "dumbbell", tintColor: .blue, amount: "\(strength) mins"),
+            Activity(title: "Soccer", subtitle: "This Week", image: "figure.soccer", tintColor: .indigo, amount: "\(soccer) mins"),
+            Activity(title: "Basketball", subtitle: "This Week", image: "figure.basketball", tintColor: .purple, amount: "\(basketball) mins"),
+            Activity(title: "Stairs", subtitle: "This Week", image: "figure.stairs", tintColor: .pink, amount: "\(stairs) mins"),
+            Activity(title: "Kickboxing", subtitle: "This Week", image: "figure.kickboxing", tintColor: .red, amount: "\(kickboxing) mins"),
         ]
     }
+    
+    //MARK: Recent Workouts
+    func fetchWorkoutsForMonth(month: Date, completion: @escaping(Result<[Workout], Error>)-> Void) {
+        let workouts = HKSampleType.workoutType()
+        let (startDate, endDate) = month.fetchMonthStartAndEndDate()
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate)
+        let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+        let query = HKSampleQuery(sampleType: workouts, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: [sortDescriptor]) { _, samples, error in
+            guard let samples = samples as? [HKWorkout], error == nil else {
+                completion(.failure(URLError(.badURL)))
+                return
+            }
+            let workoutsArray = samples.map({Workout(title: $0.workoutActivityType.name, image: $0.workoutActivityType.imageName, duration: "\(Int($0.duration)/60)", calories: $0.totalEnergyBurned?.doubleValue(for: .kilocalorie()).formattedNumberString() ?? "-", date: $0.startDate.formatWorkoutDate(), tintColor: $0.workoutActivityType.color)})
+            completion(.success(workoutsArray))
+        }
+        healthStore.execute(query)
+    }
+    
+   
 }
+

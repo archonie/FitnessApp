@@ -7,8 +7,7 @@
 
 import SwiftUI
 
-struct Workout: Identifiable {
-    let id: Int
+struct Workout {
     let title: String
     let image: String
     let duration: String

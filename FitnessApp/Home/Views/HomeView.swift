@@ -74,7 +74,7 @@ struct HomeView: View {
                     }
                     .padding(.horizontal)
                     LazyVGrid(columns: Array(repeating: GridItem(spacing: 20), count: 2)) {
-                        ForEach(viewModel.activities.isEmpty ? viewModel.mockActivities : viewModel.activities, id: \.id) { activity in
+                        ForEach(viewModel.activities.isEmpty ? viewModel.mockActivities : viewModel.activities, id: \.title) { activity in
                             ActivityCard(activity: activity)
                         }
                     }
@@ -96,7 +96,7 @@ struct HomeView: View {
                     .padding(.horizontal)
                     .padding(.top)
                     LazyVStack {
-                        ForEach(viewModel.mockWorkouts, id: \.id) { workout in
+                        ForEach(viewModel.recentWorkouts.isEmpty ? viewModel.mockWorkouts : viewModel.recentWorkouts, id: \.title) { workout in
                             WorkoutCard(workout: workout)
                         }
                     }

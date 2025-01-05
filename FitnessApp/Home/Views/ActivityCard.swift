@@ -39,5 +39,5 @@ struct ActivityCard: View {
 }
 
 #Preview {
-    ActivityCard(activity: Activity(id: 0, title: "Today Steps", subtitle: "Goal 10,000", image: "figure.walk", tintColor: .green, amount: "6121"))
+    ActivityCard(activity: Activity(title: "Today Steps", subtitle: "Goal 10,000", image: "figure.walk", tintColor: .green, amount: "6121"))
 }
