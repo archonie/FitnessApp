@@ -27,9 +27,9 @@ struct FitnessTabView: View {
                     Text("Home")
                 }
             
-            HistoricDataView()
-                .tag("Historic")
-                .tabItem {
+            ChartsView()
+                .tag("Charts")
+                .tabItem{
                     Image(systemName: "chart.line.uptrend.xyaxis")
                     Text("Charts")
                 }
