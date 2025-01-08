@@ -211,3 +211,44 @@ class HealthManager {
    
 }
 
+//MAKR: ChartView Data
+
+extension HealthManager {
+    
+    struct YearChartDataResult {
+        let oneYear: [MonthlyStepModel]
+        let ytd: [MonthlyStepModel]
+    }
+    func fetchYTDAndOneYearChartData(completion: @escaping(Result<YearChartDataResult, Error>)-> Void) {
+        let steps = HKQuantityType(.stepCount)
+        let calendar = Calendar.current
+        var oneYearMonths = [MonthlyStepModel]()
+        var ytdMonths = [MonthlyStepModel]()
+        for i in 0...11 {
+            let month = calendar.date(bySetting: .month, value: -i, of: Date()) ?? Date()
+            
+            let (startOfMonth, endOfMonth) = month.fetchMonthStartAndEndDate()
+            let predicate = HKQuery.predicateForSamples(withStart: startOfMonth, end: endOfMonth)
+            
+            let query = HKStatisticsQuery(quantityType: steps, quantitySamplePredicate: predicate) { _, result, error in
+                guard let count = result?.sumQuantity()?.doubleValue(for: .count()), error == nil else {
+                    completion(.failure(URLError(.badURL)))
+                    return
+                }
+                oneYearMonths.append(MonthlyStepModel(date: month, count: Int(count)))
+                if i == 0 {
+                    ytdMonths.append(MonthlyStepModel(date: month, count: Int(count)))
+                } else {
+                    if calendar.component(.year, from: Date()) == calendar.component(.year, from: month) {
+                        ytdMonths.append(MonthlyStepModel(date: month, count: Int(count)))
+                    }
+                }
+                
+                if i == 11 {
+                    completion(.success(YearChartDataResult(oneYear: oneYearMonths, ytd: ytdMonths)))
+                }
+            }
+            healthStore.execute(query)
+        }
+    }
+}

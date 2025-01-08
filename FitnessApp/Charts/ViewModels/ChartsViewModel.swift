@@ -8,6 +8,25 @@
 import SwiftUI
 
 class ChartsViewModel: ObservableObject {
+    @Published var oneWeekAverage = 1243
+    @Published var oneWeekTotal = 87852
+    
+    @Published var oneMonthAverage = 15813
+    @Published var oneMonthTotal = 126751
+    
+    @Published var threeMonthsAverage = 15871
+    @Published var threeMonthsTotal = 623451
+    
+    @Published var ytdChartData: [MonthlyStepModel] = []
+    @Published var yearToDateAverage = 11100
+    @Published var yearToDateTotal = 1231561
+    
+    @Published var oneYearChartData: [MonthlyStepModel] = []
+    @Published var oneYearAverage = 0
+    @Published var oneYearTotal = 0
+    
+    let healthManager = HealthManager.shared
+    
     let mockChartDataOneWeek = (0..<7).map {
         DailyStepModel(
             date: Calendar.current.date(byAdding: .day, value: -$0, to: Date()) ?? Date(),
@@ -37,19 +56,29 @@ class ChartsViewModel: ObservableObject {
             count: Double(Int.random(in: 1000...20000)) // Randomized step counts for variety
         )
     }
+
+    init()  {
+        fetchYTDAndOneYearChartData()
+    }
     
-    @Published var oneWeekAverage = 1243
-    @Published var oneWeekTotal = 87852
+    func fetchYTDAndOneYearChartData() {
+        healthManager.fetchYTDAndOneYearChartData { results in
+            switch results {
+            case .success(let success):
+                DispatchQueue.main.async {
+                    self.ytdChartData = success.ytd
+                    self.oneYearChartData = success.oneYear
+                    
+                    self.yearToDateTotal = self.ytdChartData.reduce(0, { $0 + $1.count })
+                    self.oneYearTotal = self.oneYearChartData.reduce(0, { $0 + $1.count })
+                    
+                    self.oneYearAverage = Int(Double(self.oneYearTotal) / 12.0)
+                    self.yearToDateAverage = self.yearToDateTotal / Calendar.current.component(.month, from: Date())
+                }
+            case .failure(let failure):
+                print(failure.localizedDescription)
+            }
+        }
+    }
     
-    @Published var oneMonthAverage = 15813
-    @Published var oneMonthTotal = 126751
-    
-    @Published var threeMonthsAverage = 15871
-    @Published var threeMonthsTotal = 623451
-    
-    @Published var yearToDateAverage = 11100
-    @Published var yearToDateTotal = 1231561
-    
-    @Published var oneYearAverage = 12678
-    @Published var oneYearTotal = 2347897
 }
